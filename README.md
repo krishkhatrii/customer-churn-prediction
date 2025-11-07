@@ -104,12 +104,33 @@ This project aims to predict customer churn (i.e., customers likely to leave a c
 ---
 
 
-## ⚙️ How to Use This Structure in Practice
-| Stage                   | Work in                                                  | Save output in            | Move stable code to                   |
-| ----------------------- | -------------------------------------------------------- | ------------------------- | ------------------------------------- |
-| **Data cleaning**       | `notebooks/01_data_exploration.ipynb`                    | `data/processed/`         | `src/data/preprocess.py`              |
-| **Feature engineering** | `notebooks/02_feature_engineering.ipynb`                 | `data/processed/`         | `src/features/feature_engineering.py` |
-| **Model training**      | `scripts/train.py`                                       | `models/`, `experiments/` | `src/models/train_model.py`           |
-| **Evaluation**          | `scripts/evaluate.py` or `notebooks/04_evaluation.ipynb` | `experiments/`            | `src/models/evaluate.py`              |
-| **Explainability**      | `notebooks/05_explainability.ipynb`                      | `experiments/`            | `src/explainability/`                 |
+### 🧩 How to use this folder structure in practice
+Here’s a realistic workflow example for your churn-prediction project 
 
+**Step 1: Data exploration**
+- Work in `notebooks/01_data_exploration.ipynb`
+- Load data from `data/raw/churn.csv`
+- Do EDA, visualize churn rate, detect missing values.
+
+**Step 2: Preprocessing**
+- Move cleaning code into `src/data/preprocess.py`
+- Save cleaned dataset to `data/processed/churn_clean.csv`
+
+**Step 3: Feature engineering**
+- Create functions in `src/features/feature_engineering.py`
+- Test them from a notebook or script.
+
+**Step 4: Model training**
+- Write reusable training functions in `src/models/train_model.py`
+- Use `scripts/train.py` to execute training and save model to `models/model.pkl.`
+
+**Step 5: Model evaluation**
+- Save evaluation metrics in `experiments/.`
+- Use `scripts/evaluate.py` for automation.
+
+**Step 6: Explainability**
+- Add SHAP or LIME analysis in `src/explainability/shap_analysis.py`
+
+**Step 7: Testing and CI**
+- Add small unit tests in `tests/.`
+- Use `.github/workflows/ci.yml` to automate testing when teammates push code.
