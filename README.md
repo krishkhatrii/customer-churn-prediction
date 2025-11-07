@@ -6,40 +6,40 @@ It follows a modular and scalable structure — designed for teamwork, experimen
 
 ---
 
-## 📂 Folder Structure Overview
-churn-project/
-├─ data/ # Datasets (raw and processed)
-│ ├─ raw/ # Original datasets (not uploaded to GitHub)
-│ └─ processed/ # Cleaned/feature-engineered data
-│
-├─ notebooks/ # Jupyter notebooks for EDA & experiments
-│ ├─ 01_data_exploration.ipynb
-│ ├─ 02_feature_engineering.ipynb
-│ ├─ 03_model_training.ipynb
-│ └─ 04_evaluation.ipynb
-│
-├─ src/ # Reusable core code (modular Python modules)
-│ ├─ data/ # Data loading and cleaning scripts
-│ ├─ features/ # Feature engineering and encoding
-│ ├─ models/ # Model training, evaluation, and saving
-│ └─ explainability/ # Model explainability tools (SHAP, LIME)
-│
-├─ scripts/ # Command-line runnable scripts
-│ ├─ train.py # Train model end-to-end using src code
-│ ├─ evaluate.py # Evaluate model and save metrics
-│ └─ predict.py # Run predictions on new data
-│
-├─ tests/ # Unit and integration tests (using pytest)
-│ ├─ test_preprocessing.py
-│ └─ test_model_training.py
-│
-├─ models/ # Saved trained models (.pkl / .json)
-│
-├─ experiments/ # Logs, metrics, plots, and experiment outputs
-│
-├─ .github/workflows/ # GitHub Actions CI/CD configurations
-│
-├─ .gitignore # Files and folders excluded from Git tracking
-├─ requirements.txt # Python package dependencies
-├─ environment.yml # (Optional) Conda environment setup
-└─ README.md # Project documentation
+## 📁 Project Folder Structure
+
+**Root directory:** `customer-churn-prediction/`
+
+### 🗂️ 1. `data/`
+- **Purpose:** Store datasets used in the project.
+- **Subfolders:**
+  - `raw/` – Original unprocessed datasets (not pushed to GitHub).
+  - `processed/` – Cleaned and transformed data ready for modeling.
+- **Usage example:**
+  - Input: `data/raw/churn.csv`
+  - Output: `data/processed/churn_clean.csv`
+
+---
+
+### 📒 2. `notebooks/`
+- **Purpose:** Jupyter notebooks for exploration and experiments.
+- **Example notebooks:**
+  - `01_data_exploration.ipynb` – Explore and visualize churn patterns.
+  - `02_feature_engineering.ipynb` – Create and encode new features.
+  - `03_model_training.ipynb` – Train and tune ML models.
+  - `04_evaluation.ipynb` – Evaluate model performance.
+- **Tip:** Move finalized, reusable code from notebooks into `src/`.
+
+---
+
+### ⚙️ 3. `src/`
+- **Purpose:** Core reusable source code (modular Python scripts).
+- **Subfolders:**
+  - `data/` – Data loading and cleaning functions.
+  - `features/` – Feature transformation and encoding.
+  - `models/` – Model training, evaluation, and saving.
+  - `explainability/` – Model interpretation tools (e.g., SHAP, LIME).
+- **Usage:**  
+  Import reusable functions like:
+  ```python
+  from src.models.train_model import train_rf_model
