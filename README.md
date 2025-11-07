@@ -1,8 +1,6 @@
 # Customer Churn Prediction
-# 🧠 Customer Churn Prediction Project
 
 This project aims to predict customer churn (i.e., customers likely to leave a company) using Machine Learning models.  
-It follows a modular and scalable structure — designed for teamwork, experimentation, and easy reproducibility.
 
 ---
 
@@ -89,15 +87,15 @@ It follows a modular and scalable structure — designed for teamwork, experimen
 
 - **Purpose:** Store experiment outputs, logs, metrics, and plots.  
 - **Example structure:**
-experiments/
-├─ run_001/
-│  ├─ metrics.json
-│  ├─ confusion_matrix.png
-│  └─ model.pkl
+- experiments/
+    - run_001/
+        - metrics.json
+        - confusion_matrix.png
+        - model.pkl
 
 ---
 
-🧾 9. Other important files
+### 🧾 9. Other important files
 - .gitignore	->  Tells Git which files/folders to ignore (e.g., data, models).
 - requirements.txt  ->  Lists all Python dependencies.
 - environment.yml	->  (Optional) Conda environment setup file.
