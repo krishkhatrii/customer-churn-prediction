@@ -98,10 +98,10 @@ experiments/
 ---
 
 🧾 9. Other important files
-.gitignore	->  Tells Git which files/folders to ignore (e.g., data, models).
-requirements.txt  ->  Lists all Python dependencies.
-environment.yml	->  (Optional) Conda environment setup file.
-README.md	->  Documentation for your project.
+- .gitignore	->  Tells Git which files/folders to ignore (e.g., data, models).
+- requirements.txt  ->  Lists all Python dependencies.
+- environment.yml	->  (Optional) Conda environment setup file.
+- README.md	->  Documentation for your project.
 
 ---
 
