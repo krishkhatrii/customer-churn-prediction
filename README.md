@@ -43,3 +43,75 @@ It follows a modular and scalable structure — designed for teamwork, experimen
   Import reusable functions like:
   ```python
   from src.models.train_model import train_rf_model
+
+---
+
+### 🧩 4. `scripts/`
+
+- **Purpose:** Command-line scripts to run pipelines end-to-end.  
+- **Files:**
+  - `train.py` – Train models using code from `src/`.
+  - `evaluate.py` – Evaluate trained models and log metrics.
+  - `predict.py` – Generate predictions on new data.
+- **Usage:**
+  ```bash
+  python scripts/train.py
+
+---
+
+### 🧪 5. `tests/`
+
+- **Purpose:** Contains automated tests for your code.  
+- **Examples:**
+  - `test_preprocessing.py`
+  - `test_model_training.py`
+- **Usage:**
+  ```bash
+  pytest
+
+---
+
+### 🤖 6. `.github/workflows/`
+
+- **Purpose:** Holds GitHub Actions (CI/CD) configuration files.  
+- **Usage:** Automate testing or code formatting checks on every pull request.
+
+---
+
+### 🧠 7. `models/`
+
+- **Purpose:** Store trained model files (e.g., `.pkl`, `.joblib`, `.json`).  
+- **Tip:** Add this folder to `.gitignore` to avoid pushing large binaries.
+
+---
+
+### 📊 8. `experiments/`
+
+- **Purpose:** Store experiment outputs, logs, metrics, and plots.  
+- **Example structure:**
+experiments/
+├─ run_001/
+│  ├─ metrics.json
+│  ├─ confusion_matrix.png
+│  └─ model.pkl
+
+---
+
+🧾 9. Other important files
+.gitignore	->  Tells Git which files/folders to ignore (e.g., data, models).
+requirements.txt  ->  Lists all Python dependencies.
+environment.yml	->  (Optional) Conda environment setup file.
+README.md	->  Documentation for your project.
+
+---
+
+
+## ⚙️ How to Use This Structure in Practice
+| Stage                   | Work in                                                  | Save output in            | Move stable code to                   |
+| ----------------------- | -------------------------------------------------------- | ------------------------- | ------------------------------------- |
+| **Data cleaning**       | `notebooks/01_data_exploration.ipynb`                    | `data/processed/`         | `src/data/preprocess.py`              |
+| **Feature engineering** | `notebooks/02_feature_engineering.ipynb`                 | `data/processed/`         | `src/features/feature_engineering.py` |
+| **Model training**      | `scripts/train.py`                                       | `models/`, `experiments/` | `src/models/train_model.py`           |
+| **Evaluation**          | `scripts/evaluate.py` or `notebooks/04_evaluation.ipynb` | `experiments/`            | `src/models/evaluate.py`              |
+| **Explainability**      | `notebooks/05_explainability.ipynb`                      | `experiments/`            | `src/explainability/`                 |
+
