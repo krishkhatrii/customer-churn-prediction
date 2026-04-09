@@ -22,6 +22,8 @@ __pycache__/
 
 # Old/duplicate model directories (app uses backend/artifacts/)
 models/
+final_models/
+notebooks/final_models/
 
 # Auto-generated CatBoost training logs
 #notebooks/catboost_info/
