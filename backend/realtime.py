@@ -1,49 +1,31 @@
-# backend/realtime.py
 import joblib
 import numpy as np
 import pandas as pd
 import os
-from .nl_explainer import NLExplainer
+import shap
 
-# -------------------------
-# Load backend artifacts
-# -------------------------
+
+# Load artifacts
 artifact_path = "backend/artifacts/"
 
 model = joblib.load(artifact_path + "super_ensemble.pkl")
 scaler = joblib.load(artifact_path + "scaler.pkl")
 mappings = joblib.load(artifact_path + "mappings.pkl")            # dict of label encoders
-tda_centers = np.load(artifact_path + "tda_node_centers_1.npy", allow_pickle=True)
-feature_columns = joblib.load(os.path.join(artifact_path, "feature_columns_1.pkl"))  # list of final columns for TDA (length 350)
+tda_centers = np.load(artifact_path + "tda_node_centers.npy", allow_pickle=True)
+feature_columns = joblib.load(os.path.join(artifact_path, "tda_feature_columns.pkl"))  # list of final columns for TDA (length 350)
 
 kmeans_scaler = joblib.load(artifact_path + "kmeans_scaler.pkl")
 kmeans_encoder = joblib.load(artifact_path + "kmeans_encoder.pkl")
 kmeans_cols = joblib.load(artifact_path + "kmeans_feature_columns.pkl")
 segmenter = joblib.load(artifact_path + "segmentation_model.pkl")
 
-nl_explainer = joblib.load(artifact_path + "nl_explainer.pkl")    # callable for natural language explanation
-shap_bundle = joblib.load(artifact_path + "shap_explainer.pkl")
-shap_explainer = shap_bundle["explainer"]
-shap_feature_names = joblib.load(artifact_path + "xai_feature_names.pkl")
-
 # From mappings (encoder values)
 gender_map = {v: k for k, v in mappings["gender"].items()}
 payment_map = {v: k for k, v in mappings["paymentmethod"].items()}
 industry_map = {v: k for k, v in mappings["industry"].items()}
 
-nl_explainer = NLExplainer(
-    model=model,
-    shap_explainer=shap_explainer,
-    feature_names=feature_names,
-    gender_map=gender_map,
-    payment_map=payment_map,
-    industry_map=industry_map
-)
 
 
-# -------------------------
-# Helper functions
-# -------------------------
 def encode_row(input_dict):
     encoded = []
 
@@ -65,9 +47,8 @@ def assign_tda_node(base_vector):
     return int(np.argmin(distances))
 
 def preprocess_realtime(input_dict):
-    # -------------------------------
+    
     # 1. MAIN MODEL ENCODING (350 features)
-    # -------------------------------
     encoded_and_numeric = encode_row(input_dict)
 
     n_cats = len(mappings)
@@ -91,9 +72,8 @@ def preprocess_realtime(input_dict):
             f"Feature mismatch: got {final_features.shape[0]}, expected {len(feature_columns)}"
         )
 
-    # -------------------------------
-    # 2. FEATURES FOR KMEANS (18 features)
-    # -------------------------------
+
+    # FEATURES FOR KMEANS (18 features)
     kmeans_cat_cols = ['gender', 'paymentmethod', 'industry']
 
     kmeans_num_array = kmeans_scaler.transform(
@@ -106,9 +86,8 @@ def preprocess_realtime(input_dict):
 
     features_kmeans = np.concatenate([cat_array_for_kmeans, kmeans_num_array])
 
-    # -------------------------------
-    # 3. RAW EXPLAINER VECTOR (6 features)
-    # -------------------------------
+    
+    # RAW EXPLAINER VECTOR (6 features)
     explainer_vector = np.array([
         input_dict["gender"],
         input_dict["paymentmethod"],
@@ -121,7 +100,7 @@ def preprocess_realtime(input_dict):
     return final_features, features_kmeans, explainer_vector
 
 
-# Main prediction function
+
 def predict_realtime(input_dict):
 
     features_350, features_kmeans, explainer_vector = preprocess_realtime(input_dict)
@@ -132,31 +111,199 @@ def predict_realtime(input_dict):
 
     # segmentation
     segment = int(segmenter.predict([features_kmeans])[0])
-
-    # CLV
+    
+    # CLV calculation
     monthly = float(input_dict.get("monthlycharges", 0))
     tenure = float(input_dict.get("tenure", 0))
     clv_value = monthly * tenure * 1.2
-
-    # explanation from natural language explainer
-    explanation = nl_explainer.explain(explainer_vector)
-
-    # Recommended action
-    if probability >= 0.7 and clv_value > 2000:
-        action = "Offer strong discount"
-    elif probability >= 0.7:
-        action = "Send retention SMS"
-    elif probability >= 0.4:
-        action = "Engagement email"
+    
+    # CLV thresholds
+    if clv_value < 1000:
+        clv_label = "Low"
+    elif clv_value < 3000:
+        clv_label = "Medium"
     else:
-        action = "No action needed"
+        clv_label = "High"
+    
+    # Segment meaning
+    # 0 = Low value group
+    # 1 = Medium value group
+    # 2 = High value group
+    
+    # Priority:
+    #  CLV as primary signal 
+    # segment to adjust classification when CLV is borderline
+    
+    if clv_label == "High":
+        final_value = "High Value"
+    
+    elif clv_label == "Medium":
+        if segment == 2:          # high-value segment
+            final_value = "High Value"
+        elif segment == 1:        # medium-value segment
+            final_value = "Medium Value"
+        else:                     # seg 0 + medium CLV
+            final_value = "Low Value"
+    
+    else:  # clv_label == "Low"
+        if segment == 2:          # high-value segment but low CLV
+            final_value = "Medium Value"
+        elif segment == 1:        # medium segment
+            final_value = "Low Value"
+        else:                     # seg 0
+            final_value = "Low Value"
 
+
+    
+    # Recommended action
+    if probability >= 0.7:
+        if clv_value > 2000:
+            action = "50% off for next 3 months" 
+        else:
+            action = "Offer 10% Discount" 
+    
+    elif probability >= 0.5:
+        if clv_value > 2000:
+            action = "Offer Loyalty Bonus (Free Month)"
+        else:
+            action = "Automated 'We miss you' email"
+    
+    else: # Low churn probability
+        if clv_value > 2000:
+            action = "Request Referral / VIP Event Invite"
+        else:
+            action = "Suggest Premium Plan"
+    
+    # SHAP
+    shap_top_features = compute_shap_realtime(model, features_350, input_dict, final_value)
+    
     return {
         "prediction": prediction,
         "probability": probability,
-        "segment": segment,
+        "segment": final_value,
         "clv": clv_value,
-        "explanation": explanation,
-        "recommended_action": action
+        "recommended_action": action,
+        "shap_explanation": shap_top_features
     }
+
+
+
+# SHAP EXPLAINABILITY
+def compute_shap_realtime(model, final_feature_vector, input_dict, final_value):
+    
+    # background: mean of 350 features
+    background = np.zeros((1, len(final_feature_vector))) 
+    
+    def predict_fn(X):
+        return model.predict_proba(X)[:, 1]
+
+    explainer = shap.KernelExplainer(predict_fn, background)
+
+    # convert input to 2D numpy array
+    X_input = np.reshape(final_feature_vector, (1, -1))
+    shap_values = explainer.shap_values(X_input)[0]
+
+    abs_vals = np.abs(shap_values)
+    
+    sorted_idx = abs_vals.argsort()[::-1]
+
+    top_features = []
+    
+    for idx in sorted_idx:
+        feature_name = feature_columns[idx] # 350 feature column names
+        
+        # Skip tda
+        if "tda" in str(feature_name): 
+            continue
+
+        top_features.append({
+            "feature": feature_name,
+            "shap_value": float(shap_values[idx])
+        })
+
+        if len(top_features) >= 10:
+            break
+
+
+    # NATURAL LANGUAGE EXPLANATION    
+    column_names = [
+        "gender",           # 0
+        "paymentmethod",    # 1
+        "industry",          # 2
+        "age",              # 3
+        "tenure",           # 4
+        "monthlycharges"  # 5
+    ]
+
+    # PREDICT PROBABILITY
+    prob = float(model.predict_proba([final_feature_vector])[0][1])
+    
+    explanations = []
+    industry_name = ""
+    name = ""
+
+    # NATURAL LANGUAGE 
+    for feat in top_features:
+        
+        if feat["feature"] >= 0:
+            col = int(feat["feature"])
+            if col > 5:
+                continue
+            name = column_names[col]
+        else:
+            continue
+
+        
+        raw_value = input_dict.get(name)
+
+        if name == "gender":
+            continue            
+
+        elif name == "age":
+            if raw_value < 35:
+                explanations.append(f"is a young customer")
+            elif raw_value < 55:
+                explanations.append(f"is a middle-aged customer")
+            else:
+                explanations.append(f"is a senior customer")           
+
+        elif name == "tenure":
+            if raw_value < 15:
+                explanations.append(f"is a short-tenure customer")
+            elif raw_value < 35:
+                explanations.append(f"is a medium-tenure customer")
+            else:
+                explanations.append(f"is a long-tenure customer")            
+
+        elif name == "monthlycharges":
+            if raw_value < 40:
+                explanations.append(f"has low monthly charges")
+            elif raw_value < 90:
+                explanations.append(f"has moderate monthly charges")
+            else:
+                explanations.append(f"has high monthly charges")
+            
+        elif name == "paymentmethod":
+            decoded = raw_value 
+            explanations.append(f"uses {decoded}")
+
+        elif name == "industry":
+            industry_name = raw_value
+
+        else:
+            explanations.append(name.replace("_"," "))
+
+    # Combine reasons
+    if len(explanations) > 1:
+        reasons = ", ".join(explanations[:-1]) + ", and " + explanations[-1]
+
+    # FINAL SENTENCE 
+    sentence = (
+        f"Customer from the {industry_name} industry is predicted to churn "
+        f"with a probability of {prob:.2f}. "
+        f"This is mainly because the customer {reasons}. Therefore, this is a {final_value.lower()} customer."
+    )
+    
+    return sentence
+    
 
