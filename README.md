@@ -45,6 +45,16 @@ Evaluated on a held-out test set (n = 4,226):
 
 ---
 
+## Data
+
+Three public datasets combined into a unified cross-industry training set:
+
+- [Telco Customer Churn](https://www.kaggle.com/datasets/blastchar/telco-customer-churn)
+- [E-Commerce Churn](https://www.kaggle.com/datasets/surajbhandari527/ecommerce-churn-data-for-churn-prediction-models/data)
+- [Subscription](https://www.kaggle.com/datasets/akashanandt/streaming-service-data)(Streaming Service Data on Kaggle)
+
+---
+
 ## Tech Stack
 
 | Component | Library |
