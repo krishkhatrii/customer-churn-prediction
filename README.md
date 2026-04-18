@@ -1,87 +1,51 @@
-# ChurnGuard: Customer Churn Prediction
+# ChurnGuard: Predicting and Preventing Customer Loss
 
-A Streamlit web app that predicts customer churn in real time using a TDA-enhanced ensemble model, customer segmentation, and natural language SHAP explanations.
+A cross-industry customer churn prediction system built with a TDA-enhanced gradient boosting ensemble and SHAP-based explanations, served through a real-time Streamlit dashboard.
 
 ---
 
-## 🚀 Running the App
+## Quick Start
 
 ```bash
 pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-The app has two pages accessible from the sidebar:
+Two pages are available from the sidebar:
 
 | Page | Description |
 |------|-------------|
-| **Real-Time Dashboard** | Simulates a live data stream — auto-refreshes every 10 seconds with a randomly generated customer and prediction |
-| **Manual Prediction** | Enter customer details manually and get an instant churn forecast |
+| **Real-Time Dashboard** | Auto-refreshes every 10 seconds with a randomly generated customer and live churn prediction |
+| **Manual Prediction** | Enter customer details manually and get an instant churn forecast with explanation |
 
 ---
 
-## 📁 Project Structure
+## How It Works
 
-```
-customer-churn-prediction/
-│
-├── streamlit_app.py              # App entry point, sidebar navigation
-│
-├── pages/
-│   ├── Real_Time_Dashboard.py    # Real-time simulation page
-│   └── Manual_Prediction.py     # Manual input prediction page
-│
-├── backend/
-│   ├── realtime.py               # Core prediction engine (preprocessing, model inference, SHAP)
-│   ├── nl_explainer.py           # NLExplainer class (archived, replaced by inline logic)
-│   └── artifacts/                # Trained model files loaded at runtime
-│       ├── super_ensemble.pkl        # Ensemble churn model (XGBoost + LightGBM + CatBoost)
-│       ├── scaler.pkl                # Numeric feature scaler
-│       ├── mappings.pkl              # Label encoders for categorical features
-│       ├── tda_node_centers.npy      # TDA topology node centers
-│       ├── tda_feature_columns.pkl   # 350 feature column names (base + TDA one-hot)
-│       ├── segmentation_model.pkl    # KMeans customer segmentation model
-│       ├── kmeans_scaler.pkl         # Scaler for segmentation features
-│       ├── kmeans_encoder.pkl        # One-hot encoder for segmentation
-│       └── kmeans_feature_columns.pkl
-│
-├── data/
-│   ├── raw/                          # Original source datasets (3 industries)
-│   │   ├── Telco-Customer-Churn.csv
-│   │   ├── Subscription_Service_Churn_Dataset.csv
-│   │   └── ecommerce_transactions.csv
-│   ├── combined_cleaned_encoded.csv  # Cleaned + encoded combined dataset (model training input)
-│   ├── combined_cleaned_unencoded.csv# Cleaned dataset before encoding
-│   ├── customer_features.csv         # 6-feature subset (segmentation + encoder input)
-│   └── train_test_data/              # Train/test splits produced by model_training.ipynb
-│       ├── X_train.csv / y_train.csv
-│       ├── X_train_smote.csv / y_train_smote.csv   # SMOTE-balanced training set
-│       ├── X_test.csv / y_test.csv
-│
-└── notebooks/                        # Full training pipeline
-    ├── data_preprocessing.ipynb      # 1. Combines raw CSVs, cleans and encodes
-    ├── feature_extraction.ipynb      # 2. Extracts 6-feature subset
-    ├── model_training.ipynb          # 3. TDA feature engineering + ensemble training
-    ├── save_label_mappings.ipynb     # 4. Saves categorical label encoders
-    ├── segmentation_and_clv.ipynb    # 5. KMeans segmentation + CLV analysis
-    ├── explainability_analysis.ipynb # SHAP + LIME analysis (reference, not required for app)
-```
+Each prediction runs through five stages:
+
+1. **Encoding** — Categorical and numerical inputs are encoded and scaled
+2. **TDA feature augmentation** — A topological representation of the input is appended to the base features
+3. **Ensemble prediction** — A soft-voting ensemble of XGBoost, LightGBM, and CatBoost outputs a churn probability
+4. **Segmentation & CLV** — A KMeans model assigns the customer to a value segment (Low / Medium / High)
+5. **Explanation** — SHAP values are converted into a plain-English reason for the prediction
 
 ---
 
-## 🧠 How It Works
+## Results
 
-Each prediction runs through 4 steps in `backend/realtime.py`:
+Evaluated on a held-out test set (n = 4,226):
 
-1. **Encoding** — Categorical inputs (gender, payment method, industry) are label-encoded using `mappings.pkl`. Numeric inputs (age, tenure, monthly charges) are scaled.
-2. **TDA features** — The encoded vector is assigned to its nearest TDA node (Topological Data Analysis), producing a 350-dimensional feature vector.
-3. **Prediction** — The ensemble model outputs a churn probability and binary prediction.
-4. **Segmentation & CLV** — A separate KMeans model assigns the customer to a value segment. CLV is estimated as `monthly charges × tenure × 1.2`. Both signals are combined to produce a final customer value label (Low / Medium / High).
-5. **Explanation** — SHAP values identify the top contributing features, which are converted into a natural language sentence.
+| Model | Accuracy | Precision | Recall | F1 |
+|---|---|---|---|---|
+| XGBoost | 0.68 | 0.58 | 0.74 | 0.65 |
+| LightGBM | 0.68 | 0.60 | 0.67 | 0.63 |
+| CatBoost | 0.68 | 0.58 | 0.75 | 0.66 |
+| **Super Ensemble** | **0.68** | **0.59** | **0.72** | **0.65** |
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Component | Library |
 |-----------|---------|
@@ -91,4 +55,15 @@ Each prediction runs through 4 steps in `backend/realtime.py`:
 | Class imbalance | imbalanced-learn (SMOTE) |
 | Topological Data Analysis | KeplerMapper |
 | Explainability | SHAP, LIME |
-| Data | pandas, numpy |
+| Data handling | pandas, numpy |
+
+---
+
+## Team
+
+Built by **Team ChurnGuard**:
+
+- Sohail Mohammed
+- Jessica Thomas
+- Krish Khatri
+- Karishma Doshi
